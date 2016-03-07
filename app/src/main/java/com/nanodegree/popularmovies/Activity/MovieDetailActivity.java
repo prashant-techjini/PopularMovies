@@ -30,6 +30,11 @@ public class MovieDetailActivity extends AppCompatActivity {
         ((TextView) findViewById(R.id.tv_rating_value)).setText(movie.voteAverage + "");
         ((TextView) findViewById(R.id.tv_overview_text)).setText(movie.overview);
 
-        Picasso.with(this).load(POSTER_URL + movie.imageUrl).into((ImageView) findViewById(R.id.iv_movie_poster));
+        ImageView imagePoster = (ImageView) findViewById(R.id.iv_movie_poster);
+        if (movie != null && !movie.imageUrl.equals("null")) {
+            Picasso.with(this).load(POSTER_URL + movie.imageUrl).into(imagePoster);
+        } else {
+            imagePoster.setImageResource(R.mipmap.ic_launcher);
+        }
     }
 }

@@ -38,7 +38,7 @@ public class MovieListActivity extends AppCompatActivity implements View.OnClick
     private ProgressDialog mProgressDialog;
 
     private static final String MOVIE_LIST_URL = "http://api.themoviedb.org/3/discover/movie?";
-    private static final String API_KEY_VALUE = "";
+    private static final String API_KEY_VALUE = "";//MovieDB API key should be added here
     private static final String API_KEY = "api_key";
     private static final String SORT_BY = "sort_by";
     private static final String POPULARITY_DESC = "popularity.desc";

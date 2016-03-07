@@ -37,7 +37,14 @@ public class MovieListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
         MovieItemViewHolder viewHolder = (MovieItemViewHolder) holder;
 
-        Picasso.with(mContext).load(POSTER_URL + mMovieList.get(position).imageUrl).into(viewHolder.imageMovie);
+        MovieModel movie = mMovieList.get(position);
+
+        if (movie != null && !movie.imageUrl.equals("null")) {
+            Picasso.with(mContext).load(POSTER_URL + movie.imageUrl).into(viewHolder.imageMovie);
+        } else {
+            //set to a default image if poster is not available
+            viewHolder.imageMovie.setImageResource(R.mipmap.ic_launcher);
+        }
 
         viewHolder.imageMovie.setTag(position);
         viewHolder.imageMovie.setOnClickListener(new View.OnClickListener() {
