@@ -1,15 +1,16 @@
 package com.nanodegree.popularmovies.Adapter;
 
+import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
+import android.graphics.Color;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
-import com.google.gson.Gson;
-import com.nanodegree.popularmovies.Activity.MovieDetailActivity;
+import com.nanodegree.popularmovies.Activity.MovieListActivity;
 import com.nanodegree.popularmovies.Model.MovieModel;
 import com.nanodegree.popularmovies.R;
 import com.squareup.picasso.Picasso;
@@ -17,11 +18,16 @@ import com.squareup.picasso.Picasso;
 import java.util.ArrayList;
 
 public class MovieListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+    private MovieListActivity mActivity;
     private Context mContext;
     private ArrayList<MovieModel> mMovieList;
     private static final String POSTER_URL = "http://image.tmdb.org/t/p/w185";
+    public int mSelectedIndex = 0;
 
-    public MovieListAdapter(Context context, ArrayList<MovieModel> movie_list) {
+    public MovieListAdapter(Activity activity, Context context, ArrayList<MovieModel> movie_list) {
+        if (activity instanceof MovieListActivity) {
+            mActivity = (MovieListActivity) activity;
+        }
         mContext = context;
         mMovieList = movie_list;
     }
@@ -39,11 +45,17 @@ public class MovieListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
         MovieModel movie = mMovieList.get(position);
 
-        if (movie != null && !movie.imageUrl.equals("null")) {
-            Picasso.with(mContext).load(POSTER_URL + movie.imageUrl).into(viewHolder.imageMovie);
+        if (movie != null && movie.poster_path != null && !movie.poster_path.equals("null")) {
+            Picasso.with(mContext).load(POSTER_URL + movie.poster_path).into(viewHolder.imageMovie);
         } else {
             //set to a default image if poster is not available
             viewHolder.imageMovie.setImageResource(R.mipmap.ic_launcher);
+        }
+
+        if (mActivity.isTablet && mSelectedIndex == position) {
+            viewHolder.imageMovie.setBackground(ContextCompat.getDrawable(mContext, R.drawable.border_rectangle));
+        } else {
+            viewHolder.imageMovie.setBackgroundColor(Color.TRANSPARENT);
         }
 
         viewHolder.imageMovie.setTag(position);
@@ -51,12 +63,8 @@ public class MovieListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             @Override
             public void onClick(View v) {
                 int position = (int) v.getTag();
-
-                Intent intent = new Intent(mContext, MovieDetailActivity.class);
-                Gson gson = new Gson();
-                String jsonString = gson.toJson(mMovieList.get(position));
-                intent.putExtra("MOVIE_DETAIL", jsonString);
-                mContext.startActivity(intent);
+                mActivity.onMovieSelected(position);
+                mSelectedIndex = position;
             }
         });
     }
@@ -67,7 +75,7 @@ public class MovieListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         //return 10;
     }
 
-    private class MovieItemViewHolder extends RecyclerView.ViewHolder {
+    public class MovieItemViewHolder extends RecyclerView.ViewHolder {
         public ImageView imageMovie;
 
         public MovieItemViewHolder(View itemView) {

@@ -2,183 +2,49 @@ package com.nanodegree.popularmovies.Activity;
 
 
 import android.app.ProgressDialog;
-import android.content.Context;
-import android.net.Uri;
-import android.os.AsyncTask;
+import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.support.v4.app.FragmentTransaction;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
+import android.widget.FrameLayout;
 
+import com.google.gson.Gson;
 import com.nanodegree.popularmovies.Adapter.MovieListAdapter;
-import com.nanodegree.popularmovies.Model.MovieModel;
+import com.nanodegree.popularmovies.Fragment.MovieDetailFragment;
+import com.nanodegree.popularmovies.Fragment.MovieListFragment;
 import com.nanodegree.popularmovies.R;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.ArrayList;
-
-public class MovieListActivity extends AppCompatActivity implements View.OnClickListener {
-    private RecyclerView mMovieListView;
-    private GridLayoutManager mLayoutManager;
-    private MovieListAdapter mAdapter;
-    private ArrayList<MovieModel> mListMovies;
+public class MovieListActivity extends AppCompatActivity {
     private ProgressDialog mProgressDialog;
+    private MovieListFragment mMovieListFragment;
 
-    private static final String MOVIE_LIST_URL = "http://api.themoviedb.org/3/discover/movie?";
-    private static final String API_KEY_VALUE = "";//MovieDB API key should be added here
-    private static final String API_KEY = "api_key";
-    private static final String SORT_BY = "sort_by";
-    private static final String POPULARITY_DESC = "popularity.desc";
-    private static final String VOTE_AVERAGE_DESC = "vote_average.desc";
+    private static final String POPULARITY_DESC = "popular";
+    private static final String VOTE_AVERAGE_DESC = "top_rated";
+    private static final String FAVOURITES = "favourites";
+    public boolean isTablet = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_movie_list);
 
-        mMovieListView = (RecyclerView) findViewById(R.id.recycler_movie_list);
-        mLayoutManager = new GridLayoutManager(this, 2);
-        mAdapter = new MovieListAdapter(this, mListMovies);
+        mMovieListFragment = (MovieListFragment) getSupportFragmentManager().findFragmentById(R.id.fragment_movie_list);
 
-        mMovieListView.setLayoutManager(mLayoutManager);
-        mMovieListView.setAdapter(mAdapter);
+        FrameLayout layoutMovieDetail = (FrameLayout) findViewById(R.id.fl_container_movie_detail);
+        if (layoutMovieDetail != null) {
+            isTablet = true;
 
-        updateMovieList(POPULARITY_DESC);
-    }
-
-    @Override
-    public void onClick(View v) {
-
-        switch (v.getId()) {
-
-            default:
-                break;
-        }
-    }
-
-    public class FetchMovieListTask extends AsyncTask<String, String, ArrayList<MovieModel>> {
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            showProgressDialog(MovieListActivity.this,
-                    MovieListActivity.this.getResources().getString(R.string.loading));
+            FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+            fragmentTransaction.replace(R.id.fl_container_movie_detail, new MovieDetailFragment());
+            fragmentTransaction.commitAllowingStateLoss();
+        } else {
+            isTablet = false;
         }
 
-        @Override
-        protected ArrayList<MovieModel> doInBackground(String... params) {
-            HttpURLConnection connection = null;
-            BufferedReader bufferedReader = null;
-            String jsonResponse = null;
-
-            Uri uri = Uri.parse(MOVIE_LIST_URL).buildUpon()
-                    .appendQueryParameter(SORT_BY, params[0])
-                    .appendQueryParameter(API_KEY, API_KEY_VALUE).build();
-
-            try {
-                URL url = new URL(uri.toString());
-                connection = (HttpURLConnection) url.openConnection();
-                connection.setRequestMethod("GET");
-                connection.connect();
-
-                InputStream inputStream = connection.getInputStream();
-
-                bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-
-                String line;
-                StringBuilder sc = new StringBuilder();
-                while ((line = bufferedReader.readLine()) != null) {
-                    sc.append(line);
-                }
-
-                jsonResponse = sc.toString();
-
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            if (connection != null) {
-                connection.disconnect();
-            }
-
-            if (bufferedReader != null) {
-                try {
-                    bufferedReader.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            return parseJsonResponse(jsonResponse);
-        }
-
-        @Override
-        protected void onPostExecute(ArrayList<MovieModel> listMovies) {
-            super.onPostExecute(listMovies);
-            removeProgressDialog();
-
-            mAdapter.setData(listMovies);
-        }
-    }
-
-    public void showProgressDialog(final Context context, String msg) {
-        mProgressDialog = new ProgressDialog(context);
-        mProgressDialog.setCancelable(false);
-        mProgressDialog.setMessage(msg);
-        mProgressDialog.show();
-    }
-
-    public void removeProgressDialog() {
-        if (null != mProgressDialog && mProgressDialog.isShowing()) {
-            mProgressDialog.dismiss();
-        }
-    }
-
-
-    private ArrayList<MovieModel> parseJsonResponse(String jsonString) {
-        JSONObject responseObject = null;
-        ArrayList<MovieModel> listMovies = new ArrayList<MovieModel>();
-
-        try {
-            responseObject = new JSONObject(jsonString);
-
-            JSONArray movieList = responseObject.optJSONArray("results");
-
-            for (int i = 0; i < movieList.length(); i++) {
-                JSONObject movieItem = movieList.optJSONObject(i);
-                MovieModel movieModel = new MovieModel();
-
-                movieModel.id = movieItem.getInt("id");
-                movieModel.imageUrl = movieItem.getString("poster_path");
-                movieModel.title = movieItem.getString("original_title");
-                movieModel.popularity = movieItem.getDouble("popularity");
-                movieModel.voteAverage = movieItem.getDouble("vote_average");
-                movieModel.releaseDate = movieItem.getString("release_date");
-                movieModel.overview = movieItem.getString("overview");
-
-                listMovies.add(movieModel);
-            }
-
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        return listMovies;
     }
 
 
@@ -194,11 +60,15 @@ public class MovieListActivity extends AppCompatActivity implements View.OnClick
 
         switch (item.getItemId()) {
             case R.id.action_sort_popular:
-                updateMovieList(POPULARITY_DESC);
+                mMovieListFragment.updateMovieList(POPULARITY_DESC);
                 break;
 
             case R.id.action_sort_rating:
-                updateMovieList(VOTE_AVERAGE_DESC);
+                mMovieListFragment.updateMovieList(VOTE_AVERAGE_DESC);
+                break;
+
+            case R.id.action_show_favourites:
+                mMovieListFragment.updateMovieList(FAVOURITES);
                 break;
 
             default:
@@ -208,7 +78,46 @@ public class MovieListActivity extends AppCompatActivity implements View.OnClick
         return super.onOptionsItemSelected(item);
     }
 
-    private void updateMovieList(String sort_by) {
-        (new FetchMovieListTask()).execute(sort_by);
+    public void onMovieSelected(int position) {
+
+        if (isTablet) {
+            MovieListAdapter adapter = (MovieListAdapter) mMovieListFragment.mMovieListView.getAdapter();
+            int lastSelectedIndex = adapter.mSelectedIndex;
+            MovieListAdapter.MovieItemViewHolder viewHolderLastSelected = (MovieListAdapter.MovieItemViewHolder) mMovieListFragment.mMovieListView.
+                    findViewHolderForLayoutPosition(lastSelectedIndex);
+
+            if (viewHolderLastSelected != null) {
+                viewHolderLastSelected.imageMovie.setBackgroundColor(Color.TRANSPARENT);
+            }
+
+            MovieListAdapter.MovieItemViewHolder viewHolder = (MovieListAdapter.MovieItemViewHolder) mMovieListFragment.mMovieListView.findViewHolderForLayoutPosition(position);
+            if (viewHolder != null) {
+                viewHolder.imageMovie.setBackground(ContextCompat.getDrawable(this, R.drawable.border_rectangle));
+            }
+
+            adapter.mSelectedIndex = position;
+
+            MovieDetailFragment movieDetailFragment = new MovieDetailFragment();
+
+            Gson gson = new Gson();
+            String jsonString = gson.toJson(mMovieListFragment.mListMovies.get(position));
+
+            getIntent().putExtra("MOVIE_DETAIL", jsonString);
+
+//            Bundle arguments = new Bundle();
+//            arguments.putString("MOVIE_DETAIL", jsonString);
+//            movieDetailFragment.setArguments(arguments);
+
+            FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+            fragmentTransaction.replace(R.id.fl_container_movie_detail, movieDetailFragment);
+            fragmentTransaction.commitAllowingStateLoss();
+        } else {
+            Intent intent = new Intent(this, MovieDetailActivity.class);
+            Gson gson = new Gson();
+            String jsonString = gson.toJson(mMovieListFragment.mListMovies.get(position));
+            intent.putExtra("MOVIE_DETAIL", jsonString);
+            startActivity(intent);
+        }
     }
+
 }

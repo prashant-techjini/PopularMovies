@@ -8,5 +8,17 @@
 
     <string name="sort_by_most_popular">Sort by - Most popular</string>
     <string name="sort_by_highest_rated">Sort by - Highest rated</string>
+    <string name="show_favourites">Show Favourites</string>
+    <string name="mark_favourite">MARK AS FAVOURITE</string>
+    <string name="trailor">Trailor</string>
+    <string name="trailors">Trailors</string>
+    <string name="reviews">Reviews</string>
+    <string name="loading_trailors">Loading Trailors...</string>
+    <string name="loading_reviews">Loading Reviews...</string>
+    <string name="api_error">Something went wrong.</string>
+
+    <string name="favourite_added">Added successfully to the list of Favorite movies.</string>
+    <string name="already_favourite">This is already present in the list of Favourite movies.</string>
+    <string name="favourite_add_error">Some error occurred.</string>
 
 </resources>
